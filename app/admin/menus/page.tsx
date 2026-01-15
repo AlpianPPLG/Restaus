@@ -5,7 +5,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useMenus, useDeleteMenu, useToggleMenuStatus } from '@/hooks/use-menus';
+import { useMenus, useDeleteMenu, useToggleMenuStatus, useCategories } from '@/hooks/use-menus';
 import { MenuTable } from '@/components/organisms/menu-table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,22 +13,43 @@ import { Plus, Search, Filter } from 'lucide-react';
 import { Menu } from '@/types';
 import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { MenuFormDialog } from '@/components/organisms/menu-form-dialog';
 
 export default function AdminMenusPage() {
     const { data: menus = [], isLoading } = useMenus();
+    const { data: categories = [] } = useCategories();
     const deleteMenu = useDeleteMenu();
     const toggleMenuStatus = useToggleMenuStatus();
+
+    // State
     const [searchTerm, setSearchTerm] = useState('');
+    const [categoryFilter, setCategoryFilter] = useState<string>('all');
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [selectedMenu, setSelectedMenu] = useState<Menu | null>(null);
 
     // Filter logic
-    const filteredMenus = menus.filter(menu =>
-        menu.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        menu.category?.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredMenus = menus.filter(menu => {
+        const matchesSearch = menu.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            menu.category?.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesCategory = categoryFilter === 'all' || menu.category_id.toString() === categoryFilter;
+        return matchesSearch && matchesCategory;
+    });
+
+    const handleCreate = () => {
+        setSelectedMenu(null);
+        setIsDialogOpen(true);
+    };
 
     const handleEdit = (menu: Menu) => {
-        toast.info(`Edit ${menu.name} - Feature coming soon`);
-        // Will open modal/sheet
+        setSelectedMenu(menu);
+        setIsDialogOpen(true);
     };
 
     const handleDelete = async (menuId: number) => {
@@ -58,7 +79,7 @@ export default function AdminMenusPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Menu Management</h1>
                     <p className="text-gray-500">Manage your restaurant menu items and inventory.</p>
                 </div>
-                <Button className="bg-orange-600 hover:bg-orange-700">
+                <Button onClick={handleCreate} className="bg-orange-600 hover:bg-orange-700">
                     <Plus className="w-4 h-4 mr-2" />
                     Add New Menu
                 </Button>
@@ -78,10 +99,23 @@ export default function AdminMenusPage() {
                                     onChange={(e) => setSearchTerm(e.target.value)}
                                 />
                             </div>
-                            <Button variant="outline" size="sm" className="h-9">
-                                <Filter className="w-4 h-4 mr-2" />
-                                Filter
-                            </Button>
+
+                            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                                <SelectTrigger className="w-[150px] h-9">
+                                    <div className="flex items-center">
+                                        <Filter className="w-4 h-4 mr-2 text-gray-500" />
+                                        <SelectValue placeholder="All Categories" />
+                                    </div>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="all">All Categories</SelectItem>
+                                    {categories.map(cat => (
+                                        <SelectItem key={cat.id} value={cat.id.toString()}>
+                                            {cat.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
                         </div>
                     </CardTitle>
                 </CardHeader>
@@ -95,6 +129,12 @@ export default function AdminMenusPage() {
                     />
                 </CardContent>
             </Card>
+
+            <MenuFormDialog
+                open={isDialogOpen}
+                onOpenChange={setIsDialogOpen}
+                menuToEdit={selectedMenu}
+            />
         </div>
     );
 }

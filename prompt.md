@@ -56,7 +56,7 @@ Plan.md: Berisi arsitektur aplikasi, skema alur data (ERD penjelasan), dan strat
 
 Major Tasks: (Dibuat secara detail dan banyak)
 
-Setup Project & Database Migration.
+Setup Project.
 
 Sistem Autentikasi & Multi-role (Admin, Waiter, Kasir, Kitchen).
 

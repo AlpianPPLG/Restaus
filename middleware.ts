@@ -12,7 +12,7 @@ export function middleware(request: NextRequest) {
     const authToken = request.cookies.get('restaus_auth_token')?.value;
 
     // Public paths that don't require authentication
-    const publicPaths = ['/login', '/register', '/api/auth/login', '/api/auth/register'];
+    const publicPaths = ['/', '/login', '/register', '/api/auth/login', '/api/auth/register'];
     const isPublicPath = publicPaths.some(path => pathname.startsWith(path));
 
     // If accessing public path, allow

@@ -16,7 +16,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { UserRole } from '@/types';
-import { UserPlus, Loader2, Shield, User as UserIcon, ChefHat, Coffee } from 'lucide-react';
+import { UserPlus, Loader2, Shield, User as UserIcon, ChefHat, Coffee, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { api } from '@/lib/api-client';
 import {
@@ -96,6 +96,22 @@ export default function AdminUsersPage() {
             toast.error('Failed to create user');
         } finally {
             setIsCreating(false);
+        }
+    };
+
+    const handleDeleteUser = async (id: number) => {
+        if (!confirm('Are you sure you want to delete this user?')) return;
+
+        try {
+            const res = await api.delete(`/api/users/${id}`);
+            if (res.success) {
+                toast.success('User deleted successfully');
+                fetchUsers();
+            } else {
+                toast.error(res.error || 'Failed to delete user');
+            }
+        } catch (error) {
+            toast.error('Failed to delete user');
         }
     };
 
@@ -222,12 +238,13 @@ export default function AdminUsersPage() {
                                 <TableHead>Username</TableHead>
                                 <TableHead>Role</TableHead>
                                 <TableHead>Joined Date</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24">
+                                    <TableCell colSpan={5} className="text-center h-24">
                                         <div className="flex items-center justify-center">
                                             <Loader2 className="w-6 h-6 animate-spin text-gray-400 mr-2" />
                                             Loading users...
@@ -236,7 +253,7 @@ export default function AdminUsersPage() {
                                 </TableRow>
                             ) : users.length === 0 ? (
                                 <TableRow>
-                                    <TableCell colSpan={4} className="text-center h-24 text-muted-foreground">
+                                    <TableCell colSpan={5} className="text-center h-24 text-muted-foreground">
                                         No users found.
                                     </TableCell>
                                 </TableRow>
@@ -247,6 +264,16 @@ export default function AdminUsersPage() {
                                         <TableCell>{user.username}</TableCell>
                                         <TableCell>{getRoleBadge(user.role)}</TableCell>
                                         <TableCell>{new Date(user.created_at).toLocaleDateString()}</TableCell>
+                                        <TableCell className="text-right">
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                                                onClick={() => handleDeleteUser(user.id)}
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </TableCell>
                                     </TableRow>
                                 ))
                             )}

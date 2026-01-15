@@ -18,7 +18,17 @@ async function fetchAPI<T = any>(
             },
         });
 
-        const data = await response.json();
+        let data;
+        const text = await response.text();
+        try {
+            data = JSON.parse(text);
+        } catch (e) {
+            console.error('API Invalid JSON:', text.substring(0, 500)); // Log first 500 chars
+            return {
+                success: false,
+                error: `Invalid server response (${response.status}): ${text.substring(0, 100)}...`,
+            };
+        }
 
         if (!response.ok) {
             return {

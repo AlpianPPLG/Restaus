@@ -79,6 +79,39 @@ export async function PATCH(
     }
 }
 
+// PUT update table details
+export async function PUT(
+    request: NextRequest,
+    { params }: RouteParams
+) {
+    try {
+        const { id } = await params;
+        const tableId = parseInt(id);
+        const body = await request.json();
+        const { table_number, capacity } = body;
+
+        // Validation
+        if (!table_number || capacity === undefined) {
+            return errorResponse('Table number and capacity are required', 400);
+        }
+
+        // Update table
+        await query(
+            'UPDATE tables SET table_number = ?, capacity = ? WHERE id = ?',
+            [table_number, capacity, tableId]
+        );
+
+        const updatedTable = await queryOne<Table>(
+            'SELECT * FROM tables WHERE id = ?',
+            [tableId]
+        );
+
+        return successResponse(updatedTable, 'Table updated successfully');
+    } catch (error) {
+        return handleApiError(error);
+    }
+}
+
 // DELETE table
 export async function DELETE(
     request: NextRequest,

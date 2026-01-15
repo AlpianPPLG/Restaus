@@ -4,7 +4,7 @@
 
 'use client';
 
-import { useMutation, useQueryClient } from '@tantml:invoke';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Payment, PaymentFormData } from '@/types';
 import { QUERY_KEYS } from '@/constants';
 import { api } from '@/lib/api-client';

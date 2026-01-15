@@ -28,17 +28,25 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, QrCode } from 'lucide-react';
+import { Plus, Trash2, QrCode, Edit2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useUpdateTable } from '@/hooks/use-tables';
 
 export default function AdminTablesPage() {
     const { data: tables = [], isLoading } = useTables();
     const createTableMutation = useCreateTable();
     const deleteTableMutation = useDeleteTable();
+    const updateTableMutation = useUpdateTable();
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+    const [isEditOpen, setIsEditOpen] = useState(false);
+    const [selectedTable, setSelectedTable] = useState<any>(null);
+
     const [newTableNumber, setNewTableNumber] = useState('');
     const [newTableCapacity, setNewTableCapacity] = useState('4');
+
+    const [editTableNumber, setEditTableNumber] = useState('');
+    const [editTableCapacity, setEditTableCapacity] = useState('4');
 
     const handleCreateTable = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -53,6 +61,31 @@ export default function AdminTablesPage() {
             setNewTableCapacity('4');
         } catch (error) {
             toast.error('Failed to create table');
+        }
+    };
+
+    const handleEditTable = (table: any) => {
+        setSelectedTable(table);
+        setEditTableNumber(table.table_number);
+        setEditTableCapacity(table.capacity.toString());
+        setIsEditOpen(true);
+    };
+
+    const handleUpdateTable = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!selectedTable) return;
+        try {
+            await updateTableMutation.mutateAsync({
+                tableId: selectedTable.id,
+                data: {
+                    table_number: editTableNumber,
+                    capacity: parseInt(editTableCapacity)
+                }
+            });
+            toast.success('Table updated successfully');
+            setIsEditOpen(false);
+        } catch (error) {
+            toast.error('Failed to update table');
         }
     };
 
@@ -74,58 +107,107 @@ export default function AdminTablesPage() {
                     <h1 className="text-3xl font-bold tracking-tight text-gray-900 dark:text-white">Tables</h1>
                     <p className="text-gray-500">Manage restaurant tables and generate QR codes.</p>
                 </div>
-                <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
-                    <DialogTrigger asChild>
-                        <Button>
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Table
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                        <DialogHeader>
-                            <DialogTitle>Add New Table</DialogTitle>
-                            <DialogDescription>
-                                Create a new table for your restaurant.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <form onSubmit={handleCreateTable}>
-                            <div className="grid gap-4 py-4">
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="number" className="text-right">
-                                        Number
-                                    </Label>
-                                    <Input
-                                        id="number"
-                                        value={newTableNumber}
-                                        onChange={(e) => setNewTableNumber(e.target.value)}
-                                        className="col-span-3"
-                                        placeholder="T01"
-                                        required
-                                    />
+                <div className="flex gap-2">
+                    <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
+                        <DialogTrigger asChild>
+                            <Button>
+                                <Plus className="w-4 h-4 mr-2" />
+                                Add Table
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Add New Table</DialogTitle>
+                                <DialogDescription>
+                                    Create a new table for your restaurant.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleCreateTable}>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="number" className="text-right">
+                                            Number
+                                        </Label>
+                                        <Input
+                                            id="number"
+                                            value={newTableNumber}
+                                            onChange={(e) => setNewTableNumber(e.target.value)}
+                                            className="col-span-3"
+                                            placeholder="T01"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="capacity" className="text-right">
+                                            Capacity
+                                        </Label>
+                                        <Input
+                                            id="capacity"
+                                            type="number"
+                                            value={newTableCapacity}
+                                            onChange={(e) => setNewTableCapacity(e.target.value)}
+                                            className="col-span-3"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-4 items-center gap-4">
-                                    <Label htmlFor="capacity" className="text-right">
-                                        Capacity
-                                    </Label>
-                                    <Input
-                                        id="capacity"
-                                        type="number"
-                                        value={newTableCapacity}
-                                        onChange={(e) => setNewTableCapacity(e.target.value)}
-                                        className="col-span-3"
-                                        min="1"
-                                        required
-                                    />
+                                <DialogFooter>
+                                    <Button type="submit" disabled={createTableMutation.isPending}>
+                                        {createTableMutation.isPending ? 'Creating...' : 'Create Table'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+
+                    <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+                        <DialogContent>
+                            <DialogHeader>
+                                <DialogTitle>Edit Table</DialogTitle>
+                                <DialogDescription>
+                                    Update table information.
+                                </DialogDescription>
+                            </DialogHeader>
+                            <form onSubmit={handleUpdateTable}>
+                                <div className="grid gap-4 py-4">
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="edit-number" className="text-right">
+                                            Number
+                                        </Label>
+                                        <Input
+                                            id="edit-number"
+                                            value={editTableNumber}
+                                            onChange={(e) => setEditTableNumber(e.target.value)}
+                                            className="col-span-3"
+                                            placeholder="T01"
+                                            required
+                                        />
+                                    </div>
+                                    <div className="grid grid-cols-4 items-center gap-4">
+                                        <Label htmlFor="edit-capacity" className="text-right">
+                                            Capacity
+                                        </Label>
+                                        <Input
+                                            id="edit-capacity"
+                                            type="number"
+                                            value={editTableCapacity}
+                                            onChange={(e) => setEditTableCapacity(e.target.value)}
+                                            className="col-span-3"
+                                            min="1"
+                                            required
+                                        />
+                                    </div>
                                 </div>
-                            </div>
-                            <DialogFooter>
-                                <Button type="submit" disabled={createTableMutation.isPending}>
-                                    {createTableMutation.isPending ? 'Creating...' : 'Create Table'}
-                                </Button>
-                            </DialogFooter>
-                        </form>
-                    </DialogContent>
-                </Dialog>
+                                <DialogFooter>
+                                    <Button type="submit" disabled={updateTableMutation.isPending}>
+                                        {updateTableMutation.isPending ? 'Updating...' : 'Update Table'}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </DialogContent>
+                    </Dialog>
+                </div>
             </div>
 
             <Card>
@@ -176,6 +258,14 @@ export default function AdminTablesPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Edit Table"
+                                                    onClick={() => handleEditTable(table)}
+                                                >
+                                                    <Edit2 className="w-4 h-4" />
+                                                </Button>
                                                 <Button variant="ghost" size="icon" title="Print QR Code">
                                                     <QrCode className="w-4 h-4" />
                                                 </Button>
@@ -184,6 +274,7 @@ export default function AdminTablesPage() {
                                                     size="icon"
                                                     className="text-red-500 hover:text-red-600 hover:bg-red-50"
                                                     onClick={() => handleDeleteTable(table.id)}
+                                                    disabled={table.status !== 'available'}
                                                 >
                                                     <Trash2 className="w-4 h-4" />
                                                 </Button>
@@ -199,3 +290,4 @@ export default function AdminTablesPage() {
         </div>
     );
 }
+

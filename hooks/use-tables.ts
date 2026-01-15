@@ -63,6 +63,28 @@ export function useUpdateTableStatus() {
     });
 }
 
+// Update table details (number, capacity)
+export function useUpdateTable() {
+    const queryClient = useQueryClient();
+
+    return useMutation({
+        mutationFn: async ({ tableId, data }: { tableId: number; data: { table_number: string; capacity: number } }) => {
+            const response = await api.put<Table>(`/api/tables/${tableId}`, data);
+            if (!response.success) {
+                throw new Error(response.error);
+            }
+            return response.data;
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: [QUERY_KEYS.TABLES] });
+            toast.success('Table updated successfully');
+        },
+        onError: (error: Error) => {
+            toast.error(error.message || 'Failed to update table');
+        },
+    });
+}
+
 // Create table
 export function useCreateTable() {
     const queryClient = useQueryClient();

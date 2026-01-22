@@ -28,15 +28,16 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Trash2, QrCode, Edit2 } from 'lucide-react';
+import { Plus, Trash2, QrCode, Edit2, RotateCw } from 'lucide-react';
 import { toast } from 'sonner';
-import { useUpdateTable } from '@/hooks/use-tables';
+import { useUpdateTable, useUpdateTableStatus } from '@/hooks/use-tables';
 
 export default function AdminTablesPage() {
     const { data: tables = [], isLoading } = useTables();
     const createTableMutation = useCreateTable();
     const deleteTableMutation = useDeleteTable();
     const updateTableMutation = useUpdateTable();
+    const updateStatusMutation = useUpdateTableStatus();
 
     const [isCreateOpen, setIsCreateOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -258,6 +259,16 @@ export default function AdminTablesPage() {
                                         </TableCell>
                                         <TableCell className="text-right">
                                             <div className="flex justify-end gap-2">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    title="Set Available (Clear Table)"
+                                                    onClick={() => updateStatusMutation.mutate({ tableId: table.id, status: 'available' })}
+                                                    disabled={table.status === 'available'}
+                                                    className="text-blue-500 hover:text-blue-600 hover:bg-blue-50"
+                                                >
+                                                    <RotateCw className="w-4 h-4" />
+                                                </Button>
                                                 <Button
                                                     variant="ghost"
                                                     size="icon"

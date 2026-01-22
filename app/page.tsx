@@ -211,6 +211,12 @@ export default function LandingPage() {
 
             <div className="text-sm text-slate-500">
               © 2026 RESTAUS. All rights reserved.
+              <div className="mt-2 text-xs text-slate-600 space-x-2">
+                <span>Demo Access:</span>
+                <Link href="/tables" className="hover:text-orange-500 underline decoration-dotted">Customer Tables</Link>
+                <span>•</span>
+                <Link href="/menu?table=1" className="hover:text-orange-500 underline decoration-dotted">Direct Menu (T01)</Link>
+              </div>
             </div>
 
             <div className="flex items-center gap-6">

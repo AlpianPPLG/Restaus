@@ -147,6 +147,21 @@ export function MenuFormDialog({ open, onOpenChange, menuToEdit }: MenuFormDialo
                             )}
                         />
 
+                        <FormField
+                            control={form.control}
+                            name="image_url"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Image URL <span className="text-muted-foreground font-normal">(Optional)</span></FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="https://example.com/image.jpg" {...field} />
+                                    </FormControl>
+                                    <FormDescription>Link to the menu image.</FormDescription>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+
                         <div className="grid grid-cols-2 gap-4">
                             <FormField
                                 control={form.control}

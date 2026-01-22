@@ -47,7 +47,7 @@ export function useUpdateTableStatus() {
 
     return useMutation({
         mutationFn: async ({ tableId, status }: { tableId: number; status: TableStatus }) => {
-            const response = await api.patch<Table>(`/api/tables/${tableId}/status`, { status });
+            const response = await api.patch<Table>(`/api/tables/${tableId}`, { status });
             if (!response.success) {
                 throw new Error(response.error);
             }

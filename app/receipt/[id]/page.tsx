@@ -13,46 +13,46 @@ import { Printer, ArrowLeft, Download } from 'lucide-react';
 import { useReactToPrint } from 'react-to-print';
 
 export default function ReceiptPage() {
-    const { id } = useParams();
-    const router = useRouter();
-    const { data: order, isLoading } = useOrder(Number(id));
-    const contentRef = useRef<HTMLDivElement>(null);
+  const { id } = useParams();
+  const router = useRouter();
+  const { data: order, isLoading } = useOrder(Number(id));
+  const contentRef = useRef<HTMLDivElement>(null);
 
-    const handlePrint = useReactToPrint({
-        contentRef,
-        documentTitle: `Receipt-${id}`,
-    });
+  const handlePrint = useReactToPrint({
+    contentRef,
+    documentTitle: `Receipt-${id}`,
+  });
 
-    if (isLoading) {
-        return <div className="min-h-screen flex items-center justify-center">Loading receipt...</div>;
-    }
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center">Loading receipt...</div>;
+  }
 
-    if (!order) {
-        return <div className="min-h-screen flex items-center justify-center">Order not found</div>;
-    }
+  if (!order) {
+    return <div className="min-h-screen flex items-center justify-center">Order not found</div>;
+  }
 
-    return (
-        <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 flex flex-col items-center">
-            {/* Header Actions */}
-            <div className="w-full max-w-[80mm] mb-6 flex items-center justify-between no-print">
-                <Button variant="ghost" size="sm" onClick={() => router.back()}>
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Back
-                </Button>
-                <div className="flex gap-2">
-                    <Button onClick={() => handlePrint()}>
-                        <Printer className="w-4 h-4 mr-2" />
-                        Print
-                    </Button>
-                </div>
-            </div>
+  return (
+    <div className="min-h-screen bg-gray-100 dark:bg-gray-900 py-8 px-4 flex flex-col items-center">
+      {/* Header Actions */}
+      <div className="w-full max-w-[80mm] mb-6 flex items-center justify-between no-print">
+        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+          <ArrowLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => handlePrint()}>
+            <Printer className="w-4 h-4 mr-2" />
+            Print
+          </Button>
+        </div>
+      </div>
 
-            {/* Actual Receipt */}
-            <div ref={contentRef} className="print:w-full">
-                <ReceiptPreview order={order} />
-            </div>
+      {/* Actual Receipt */}
+      <div ref={contentRef} id="print-content" className="print:w-full">
+        <ReceiptPreview order={order} />
+      </div>
 
-            <style jsx global>{`
+      <style jsx global>{`
         @media print {
           body * {
             visibility: hidden;
@@ -75,6 +75,6 @@ export default function ReceiptPage() {
           }
         }
       `}</style>
-        </div>
-    );
+    </div>
+  );
 }

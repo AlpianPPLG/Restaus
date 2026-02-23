@@ -2,25 +2,40 @@
 // RESTAUS - Single Table API Route
 // ============================================
 
-import { NextRequest } from 'next/server';
-import { query, queryOne } from '@/lib/db';
-import { successResponse, errorResponse, notFoundResponse, handleApiError } from '@/lib/api-response';
-import { Table } from '@/types';
+import { NextRequest, NextResponse } from "next/server";
+import { query, queryOne } from "@/lib/db";
+import {
+  successResponse,
+  errorResponse,
+  notFoundResponse,
+  handleApiError,
+} from "@/lib/api-response";
+import { Table } from "@/types";
+
+// CORS headers
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, PATCH, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+// Handle OPTIONS preflight request
+export async function OPTIONS() {
+  return NextResponse.json({}, { headers: corsHeaders });
+}
 
 interface RouteParams {
-    params: Promise<{ id: string }>;
+  params: Promise<{ id: string }>;
 }
 
 // GET single table
-export async function GET(
-    request: NextRequest,
-    { params }: RouteParams
-) {
-    try {
-        const { id } = await params;
-        const tableId = parseInt(id);
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const tableId = parseInt(id);
 
-        const table = await queryOne<Table>(`
+    const table = await queryOne<Table>(
+      `
       SELECT 
         t.*,
         o.id as current_order_id,
@@ -29,112 +44,125 @@ export async function GET(
       LEFT JOIN orders o ON t.id = o.table_id 
         AND o.status IN ('pending', 'processing', 'delivered')
       WHERE t.id = ?
-    `, [tableId]);
+    `,
+      [tableId],
+    );
 
-        if (!table) {
-            return notFoundResponse('Table');
-        }
-
-        return successResponse(table);
-    } catch (error) {
-        return handleApiError(error);
+    if (!table) {
+      return notFoundResponse("Table", corsHeaders);
     }
+
+    return successResponse(table, undefined, 200, corsHeaders);
+  } catch (error) {
+    return handleApiError(error, corsHeaders);
+  }
 }
 
 // PATCH update table status
-export async function PATCH(
-    request: NextRequest,
-    { params }: RouteParams
-) {
-    try {
-        const { id } = await params;
-        const tableId = parseInt(id);
-        const body = await request.json();
-        const { status } = body;
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const tableId = parseInt(id);
+    const body = await request.json();
+    const { status } = body;
 
-        // Validation
-        const validStatuses = ['available', 'reserved', 'occupied'];
-        if (!status || !validStatuses.includes(status)) {
-            return errorResponse('Invalid status', 400);
-        }
-
-        // Update table status
-        await query(
-            'UPDATE tables SET status = ? WHERE id = ?',
-            [status, tableId]
-        );
-
-        const updatedTable = await queryOne<Table>(
-            'SELECT * FROM tables WHERE id = ?',
-            [tableId]
-        );
-
-        if (!updatedTable) {
-            return notFoundResponse('Table');
-        }
-
-        return successResponse(updatedTable, 'Table status updated');
-    } catch (error) {
-        return handleApiError(error);
+    // Validation
+    const validStatuses = ["available", "reserved", "occupied"];
+    if (!status || !validStatuses.includes(status)) {
+      return errorResponse("Invalid status", 400, corsHeaders);
     }
+
+    // Update table status
+    await query("UPDATE tables SET status = ? WHERE id = ?", [status, tableId]);
+
+    const updatedTable = await queryOne<Table>(
+      "SELECT * FROM tables WHERE id = ?",
+      [tableId],
+    );
+
+    if (!updatedTable) {
+      return notFoundResponse("Table", corsHeaders);
+    }
+
+    return successResponse(
+      updatedTable,
+      "Table status updated",
+      200,
+      corsHeaders,
+    );
+  } catch (error) {
+    return handleApiError(error, corsHeaders);
+  }
 }
 
 // PUT update table details
-export async function PUT(
-    request: NextRequest,
-    { params }: RouteParams
-) {
-    try {
-        const { id } = await params;
-        const tableId = parseInt(id);
-        const body = await request.json();
-        const { table_number, capacity } = body;
+export async function PUT(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const tableId = parseInt(id);
+    const body = await request.json();
+    const { table_number, capacity } = body;
 
-        // Validation
-        if (!table_number || capacity === undefined) {
-            return errorResponse('Table number and capacity are required', 400);
-        }
-
-        // Update table
-        await query(
-            'UPDATE tables SET table_number = ?, capacity = ? WHERE id = ?',
-            [table_number, capacity, tableId]
-        );
-
-        const updatedTable = await queryOne<Table>(
-            'SELECT * FROM tables WHERE id = ?',
-            [tableId]
-        );
-
-        return successResponse(updatedTable, 'Table updated successfully');
-    } catch (error) {
-        return handleApiError(error);
+    // Validation
+    if (!table_number || capacity === undefined) {
+      return errorResponse(
+        "Table number and capacity are required",
+        400,
+        corsHeaders,
+      );
     }
+
+    // Update table
+    await query(
+      "UPDATE tables SET table_number = ?, capacity = ? WHERE id = ?",
+      [table_number, capacity, tableId],
+    );
+
+    const updatedTable = await queryOne<Table>(
+      "SELECT * FROM tables WHERE id = ?",
+      [tableId],
+    );
+
+    return successResponse(
+      updatedTable,
+      "Table updated successfully",
+      200,
+      corsHeaders,
+    );
+  } catch (error) {
+    return handleApiError(error, corsHeaders);
+  }
 }
 
 // DELETE table
-export async function DELETE(
-    request: NextRequest,
-    { params }: RouteParams
-) {
-    try {
-        const { id } = await params;
-        const tableId = parseInt(id);
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { id } = await params;
+    const tableId = parseInt(id);
 
-        // Check if table has active orders
-        const activeOrders = await query<any[]>(
-            'SELECT id FROM orders WHERE table_id = ? AND status IN (?, ?, ?)',
-            [tableId, 'pending', 'processing', 'delivered']
-        );
+    // Check if table has active orders
+    const activeOrders = await query<any[]>(
+      "SELECT id FROM orders WHERE table_id = ? AND status IN (?, ?, ?)",
+      [tableId, "pending", "processing", "delivered"],
+    );
 
-        if (activeOrders.length > 0) {
-            return errorResponse('Cannot delete table with active orders', 400);
-        }
-
-        await query('DELETE FROM tables WHERE id = ?', [tableId]);
-
-        return successResponse(null, 'Table deleted successfully');
-    } catch (error) {
-        return handleApiError(error);
+    if (activeOrders.length > 0) {
+      return errorResponse(
+        "Cannot delete table with active orders",
+        400,
+        corsHeaders,
+      );
     }
+
+    await query("DELETE FROM tables WHERE id = ?", [tableId]);
+
+    return successResponse(
+      null,
+      "Table deleted successfully",
+      200,
+      corsHeaders,
+    );
+  } catch (error) {
+    return handleApiError(error, corsHeaders);
+  }
 }
